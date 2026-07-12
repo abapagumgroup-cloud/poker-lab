@@ -1,0 +1,363 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0e1613">
+<meta name="description" content="מנוע אקוויטי מונטה-קרלו ל-Texas Hold'em ואומהה — כלי לימוד ואימון.">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="favicon-32.png" sizes="32x32">
+<link rel="icon" href="icon-192.png" sizes="192x192">
+<link rel="apple-touch-icon" href="icon-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="מעבדת הפוקר">
+</head>
+<body>
+<title>מעבדת הפוקר — מנוע אקוויטי ל-Hold'em ואומהה</title>
+<style>
+  :root{
+    --ground:#0e1613;--panel:#16211d;--panel2:#1d2a25;
+    --line:rgba(202,224,212,.09);--line-strong:rgba(202,224,212,.16);
+    --ink:#e9efe9;--muted:#8ea298;--faint:#5f7168;
+    --brass:#d3ac54;--teal:#49b59a;--coral:#e0765f;--ivory:#f2ece0;
+    --red:#c9524a;--card-ink:#20201d;
+    --serif:Georgia,"Times New Roman",serif;
+    --sans:system-ui,-apple-system,"Segoe UI","Arial Hebrew",Arial,sans-serif;
+    --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:
+      radial-gradient(1200px 600px at 22% -10%,rgba(73,181,154,.10),transparent 60%),
+      radial-gradient(900px 500px at 95% 110%,rgba(211,172,84,.07),transparent 55%),var(--ground);
+    color:var(--ink);font-family:var(--sans);line-height:1.6;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:940px;margin:0 auto;padding:clamp(22px,4vw,48px) clamp(16px,4vw,36px) 72px}
+  .eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.04em;color:var(--brass);margin:0 0 14px}
+  h1{font-family:var(--serif);font-weight:600;font-size:clamp(28px,5vw,44px);line-height:1.1;margin:0;text-wrap:balance}
+  .lede{max-width:64ch;color:var(--muted);font-size:15.5px;margin:16px 0 0}
+  .lede b{color:var(--ink)}
+
+  .tabs{display:flex;gap:8px;margin:26px 0 20px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:6px}
+  .tab{flex:1;text-align:center;padding:12px;border-radius:8px;cursor:pointer;font-weight:700;color:var(--muted);
+    border:1px solid transparent;transition:.15s}
+  .tab.active{background:linear-gradient(180deg,var(--panel2),#243530);color:var(--brass);border-color:var(--line-strong)}
+  .tab small{display:block;font-weight:400;font-size:11px;color:var(--faint);margin-top:2px}
+
+  .board{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px;margin-bottom:16px}
+  .board h3{margin:0 0 10px;font-size:12px;letter-spacing:.02em;color:var(--muted);font-weight:700;display:flex;justify-content:space-between;align-items:center}
+  .board h3 button{font-size:11px;padding:4px 10px}
+  .slots{display:flex;gap:8px;flex-wrap:wrap}
+  .slot{width:52px;height:72px;border-radius:9px;border:1.5px dashed var(--line-strong);background:rgba(255,255,255,.02);
+    display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative;transition:.12s;
+    font-family:var(--serif)}
+  .slot.active{border-color:var(--brass);border-style:solid;box-shadow:0 0 0 3px rgba(211,172,84,.15)}
+  .slot.filled{border-style:solid;border-color:transparent;background:var(--ivory);color:var(--card-ink)}
+  .slot .r{font-size:22px;font-weight:600;line-height:1}
+  .slot .s{font-size:17px;margin-top:1px}
+  .slot.red .r,.slot.red .s{color:var(--red)}
+  .slot .ph{color:var(--faint);font-size:20px;font-family:var(--sans)}
+
+  button{font-family:var(--sans);font-size:14px;font-weight:600;cursor:pointer;border-radius:9px;
+    border:1px solid transparent;padding:10px 16px;transition:.15s}
+  button:focus-visible{outline:2px solid var(--brass);outline-offset:2px}
+  .btn-primary{background:var(--brass);color:#241c07}
+  .btn-primary:hover{background:#e0bb63}
+  .btn-primary[disabled]{opacity:.5;cursor:default}
+  .btn-ghost{background:transparent;color:var(--ink);border:1px solid var(--line-strong)}
+  .btn-ghost:hover{border-color:var(--brass);color:var(--brass)}
+
+  .palette{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:16px;overflow-x:auto}
+  .prow{display:flex;gap:5px;align-items:center;margin-bottom:5px}
+  .prow:last-child{margin-bottom:0}
+  .psuit{width:20px;text-align:center;font-size:16px;color:var(--muted);flex:0 0 20px}
+  .pcard{flex:1;min-width:30px;height:34px;border-radius:6px;background:var(--ivory);color:var(--card-ink);
+    font-family:var(--serif);font-weight:600;font-size:14px;border:none;padding:0;cursor:pointer;transition:.1s}
+  .pcard.red{color:var(--red)}
+  .pcard:hover:not([disabled]){transform:translateY(-2px);box-shadow:0 4px 10px rgba(0,0,0,.35)}
+  .pcard[disabled]{opacity:.16;cursor:default}
+
+  .row{display:flex;gap:14px;flex-wrap:wrap;align-items:end;margin-bottom:16px}
+  .fld{display:flex;flex-direction:column;gap:6px}
+  .fld label{font-size:12px;color:var(--faint);font-family:var(--mono);letter-spacing:.02em}
+  select,input{font-family:var(--sans);font-size:14px;background:var(--panel2);color:var(--ink);
+    border:1px solid var(--line-strong);border-radius:8px;padding:9px 12px}
+  input{width:110px;direction:ltr;text-align:right}
+  .spring{flex:1 1 20px}
+
+  .result{background:linear-gradient(180deg,var(--panel2),var(--panel));border:1px solid var(--line-strong);
+    border-radius:14px;padding:22px;margin-bottom:16px}
+  .eqtop{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+  .eqbig{font-family:var(--serif);font-size:52px;font-weight:600;color:var(--teal);direction:ltr;line-height:1}
+  .eqlbl{color:var(--muted);font-size:14px}
+  .eqsub{font-family:var(--mono);font-size:12px;color:var(--faint);direction:ltr}
+  .wbar{display:flex;height:12px;border-radius:6px;overflow:hidden;margin:16px 0 8px;background:rgba(255,255,255,.05)}
+  .wbar i{height:100%;transition:width .2s}
+  .wwin{background:var(--teal)}.wtie{background:var(--brass)}.wlose{background:var(--coral)}
+  .wkey{display:flex;gap:18px;font-size:12.5px;color:var(--muted);flex-wrap:wrap}
+  .wkey span{display:inline-flex;align-items:center;gap:6px}
+  .dot{width:10px;height:10px;border-radius:3px;display:inline-block}
+
+  .coach{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px}
+  .coach h3{margin:0 0 4px;font-size:13px;color:var(--muted);font-weight:700}
+  .coach .note{margin:0 0 14px;font-size:12.5px;color:var(--faint)}
+  .verdict{margin-top:14px;padding:14px 16px;border-radius:10px;font-size:15px;font-weight:600;display:none}
+  .verdict.call{display:block;background:rgba(73,181,154,.12);border:1px solid rgba(73,181,154,.3);color:#8fe0c8}
+  .verdict.fold{display:block;background:rgba(224,118,95,.12);border:1px solid rgba(224,118,95,.3);color:#f0a08f}
+  .verdict b{direction:ltr;display:inline-block}
+
+  .foot{margin-top:26px;font-size:12.5px;color:var(--faint);max-width:80ch}
+  .foot b{color:var(--muted)}
+  .msg{font-family:var(--mono);font-size:12px;color:var(--brass);min-height:16px;margin-top:8px;direction:rtl}
+</style>
+
+<div class="wrap">
+  <p class="eyebrow">מנוע אקוויטי · מונטה-קרלו · חי</p>
+  <h1>מעבדת הפוקר — שתי מכונות</h1>
+  <p class="lede">בחר את היד שלך, פתח כל פלופ/טרן/ריבר שתרצה, והמנוע <b>סורק עשרות אלפי ידיים</b> ומחשב את אחוזי הניצחון המדויקים שלך מול יריבים — ב-<b>Hold'em (2 קלפים)</b> וב-<b>אומהה (4 קלפים)</b>. אחר כך המאמן אומר לך אם קריאה היא <b>+EV</b> — ככה מנצחים לאורך זמן.</p>
+
+  <div class="tabs">
+    <div class="tab active" data-game="holdem" id="tabH">Texas Hold'em<small>2 קלפים ביד</small></div>
+    <div class="tab" data-game="omaha" id="tabO">אומהה (PLO)<small>4 קלפים ביד · חובה 2</small></div>
+  </div>
+
+  <div class="board">
+    <h3>לוח — פלופ / טרן / ריבר (אופציונלי) <button class="btn-ghost" id="clrBoard">נקה לוח</button></h3>
+    <div class="slots" id="boardSlots"></div>
+  </div>
+
+  <div class="board">
+    <h3>היד שלך <button class="btn-ghost" id="clrHero">נקה יד</button></h3>
+    <div class="slots" id="heroSlots"></div>
+  </div>
+
+  <div class="palette" id="palette"></div>
+
+  <div class="row">
+    <div class="fld">
+      <label>יריבים (יד אקראית)</label>
+      <select id="opps"><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>8</option></select>
+    </div>
+    <div class="fld">
+      <label>דיוק הסריקה</label>
+      <select id="iters"><option value="1">רגיל (מהיר)</option><option value="2" selected>גבוה</option><option value="3">מקסימלי</option></select>
+    </div>
+    <div class="spring"></div>
+    <button class="btn-primary" id="run">סרוק את הידיים ▸</button>
+  </div>
+  <div class="msg" id="msg"></div>
+
+  <div class="result">
+    <div class="eqtop">
+      <span class="eqbig" id="eq">—</span>
+      <span class="eqlbl">אקוויטי (סיכוי הזכייה שלך)</span>
+      <span class="eqsub" id="simcount"></span>
+    </div>
+    <div class="wbar"><i class="wwin" id="bw" style="width:0"></i><i class="wtie" id="bt" style="width:0"></i><i class="wlose" id="bl" style="width:0"></i></div>
+    <div class="wkey">
+      <span><i class="dot wwin"></i> ניצחון <b id="kw" style="direction:ltr">—</b></span>
+      <span><i class="dot wtie"></i> תיקו <b id="kt" style="direction:ltr">—</b></span>
+      <span><i class="dot wlose"></i> הפסד <b id="kl" style="direction:ltr">—</b></span>
+    </div>
+  </div>
+
+  <div class="coach">
+    <h3>מאמן ה-EV — האם כדאי לקרוא?</h3>
+    <p class="note">הזן את גודל הקופה ואת הסכום שצריך לשלם כדי לראות את הקלף הבא. המנוע משווה לאקוויטי שלך ואומר את ההחלטה המנצחת לאורך זמן.</p>
+    <div class="row" style="margin:0">
+      <div class="fld"><label>קופה נוכחית</label><input id="pot" type="number" value="100" min="0"></div>
+      <div class="fld"><label>לשלם כדי לקרוא</label><input id="call" type="number" value="50" min="0"></div>
+      <div class="spring"></div>
+      <button class="btn-ghost" id="advise">חשב החלטה</button>
+    </div>
+    <div class="verdict" id="verdict"></div>
+  </div>
+
+  <p class="foot"><b>זה כלי לימוד ואימון — לא בוט.</b> הוא מחשב אקוויטי ומלמד אותך החלטות +EV כדי שתשתפר ותנצח לאורך זמן. אין "ניצחון מובטח" בכל יד — פוקר הוא מידע חסר ושונות, והמנוע נותן לך את הקצה המתמטי, לא קסם. שימוש בבוט אוטומטי מול שחקנים אמיתיים על כסף אסור ואינו נתמך פה.</p>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  /* ===== verified poker engine ===== */
+  // card id = rank*4 + suit ; rank 0..12 (2..A), suit 0..3
+  const RANKS=["2","3","4","5","6","7","8","9","10","J","Q","K","A"];
+  const SUITS=["♠","♥","♦","♣"]; const RED=new Set([1,2]); // hearts,diamonds red
+  function eval5(c){
+    const rc=[0,0,0,0,0,0,0,0,0,0,0,0,0], sc=[0,0,0,0];
+    for(let i=0;i<5;i++){rc[c[i]>>2]++;sc[c[i]&3]++;}
+    const isF=sc[0]===5||sc[1]===5||sc[2]===5||sc[3]===5;
+    let sh=-1;for(let r=12;r>=4;r--){if(rc[r]&&rc[r-1]&&rc[r-2]&&rc[r-3]&&rc[r-4]){sh=r;break;}}
+    if(sh<0&&rc[12]&&rc[3]&&rc[2]&&rc[1]&&rc[0])sh=3;const isS=sh>=0;
+    const g=[];for(let r=12;r>=0;r--)if(rc[r])g.push([rc[r],r]);
+    g.sort((x,y)=>y[0]-x[0]||y[1]-x[1]);
+    const g0=g[0][0],g1=g.length>1?g[1][0]:0;let cat,tb;
+    const rd=()=>{const o=[];for(let r=12;r>=0;r--)if(rc[r])o.push(r);return o;};
+    if(isS&&isF){cat=8;tb=[sh];}else if(g0===4){cat=7;tb=[g[0][1],g[1][1]];}
+    else if(g0===3&&g1===2){cat=6;tb=[g[0][1],g[1][1]];}else if(isF){cat=5;tb=rd();}
+    else if(isS){cat=4;tb=[sh];}else if(g0===3){cat=3;tb=[g[0][1],g[1][1],g[2][1]];}
+    else if(g0===2&&g1===2){cat=2;tb=[g[0][1],g[1][1],g[2][1]];}
+    else if(g0===2){cat=1;tb=[g[0][1],g[1][1],g[2][1],g[3][1]];}
+    else{cat=0;tb=rd();}
+    let s=cat;for(let i=0;i<5;i++)s=s*15+(tb[i]||0);return s;
+  }
+  const C57=[];for(let a=0;a<7;a++)for(let b=a+1;b<7;b++){const p=[];for(let k=0;k<7;k++)if(k!==a&&k!==b)p.push(k);C57.push(p);}
+  function eval7(s){let best=-1;for(let i=0;i<21;i++){const m=C57[i];const v=eval5([s[m[0]],s[m[1]],s[m[2]],s[m[3]],s[m[4]]]);if(v>best)best=v;}return best;}
+  const H2=[[0,1],[0,2],[0,3],[1,2],[1,3],[2,3]];
+  const B3=[];for(let a=0;a<5;a++)for(let b=a+1;b<5;b++)for(let d=b+1;d<5;d++)B3.push([a,b,d]);
+  function evalOmaha(ho,bo){let best=-1;for(let i=0;i<6;i++){const h=H2[i];for(let j=0;j<10;j++){const b=B3[j];
+    const v=eval5([ho[h[0]],ho[h[1]],bo[b[0]],bo[b[1]],bo[b[2]]]);if(v>best)best=v;}}return best;}
+
+  /* ===== state ===== */
+  let game="holdem";
+  let hero=[], board=[];        // arrays of ids (or null placeholders via length)
+  let heroSlots=[], boardSlots=[];
+  let active=null;              // {zone:'hero'|'board', idx}
+  const used=new Set();
+
+  const $=id=>document.getElementById(id);
+  function heroCount(){return game==="holdem"?2:4;}
+
+  function buildSlots(){
+    const hs=$('heroSlots'), bs=$('boardSlots'); hs.innerHTML='';bs.innerHTML='';
+    heroSlots=[];boardSlots=[];
+    for(let i=0;i<heroCount();i++){const el=mkSlot('hero',i);hs.appendChild(el);heroSlots.push(el);}
+    for(let i=0;i<5;i++){const el=mkSlot('board',i);bs.appendChild(el);boardSlots.push(el);}
+  }
+  function mkSlot(zone,idx){const el=document.createElement('div');el.className='slot';
+    el.innerHTML='<span class="ph">+</span>';
+    el.addEventListener('click',()=>{ // click filled -> clear; else set active
+      const arr=zone==='hero'?hero:board;
+      if(arr[idx]!=null){used.delete(arr[idx]);arr[idx]=null;renderSlot(zone,idx);renderPalette();setActive(zone,idx);}
+      else setActive(zone,idx);
+    });return el;}
+  function setActive(zone,idx){active={zone,idx};
+    [...heroSlots,...boardSlots].forEach(s=>s.classList.remove('active'));
+    (zone==='hero'?heroSlots:boardSlots)[idx].classList.add('active');}
+  function firstEmpty(){for(let i=0;i<heroCount();i++)if(hero[i]==null)return{zone:'hero',idx:i};
+    for(let i=0;i<5;i++)if(board[i]==null)return{zone:'board',idx:i};return null;}
+  function renderSlot(zone,idx){const el=(zone==='hero'?heroSlots:boardSlots)[idx];const arr=zone==='hero'?hero:board;const id=arr[idx];
+    if(id==null){el.className='slot';el.innerHTML='<span class="ph">+</span>';if(active&&active.zone===zone&&active.idx===idx)el.classList.add('active');return;}
+    const r=id>>2,s=id&3;el.className='slot filled'+(RED.has(s)?' red':'');
+    el.innerHTML=`<span class="r">${RANKS[r]}</span><span class="s">${SUITS[s]}</span>`;}
+  function placeCard(id){
+    if(!active)active=firstEmpty();
+    if(!active){flash("כל המקומות מלאים");return;}
+    const arr=active.zone==='hero'?hero:board;
+    arr[active.idx]=id;used.add(id);renderSlot(active.zone,active.idx);
+    const nx=firstEmpty();if(nx)setActive(nx.zone,nx.idx);else{[...heroSlots,...boardSlots].forEach(s=>s.classList.remove('active'));active=null;}
+    renderPalette();
+  }
+  function renderPalette(){const p=$('palette');p.innerHTML='';
+    for(let s=0;s<4;s++){const row=document.createElement('div');row.className='prow';
+      const lab=document.createElement('div');lab.className='psuit'+(RED.has(s)?' red':'');lab.textContent=SUITS[s];
+      lab.style.color=RED.has(s)?'var(--red)':'var(--muted)';row.appendChild(lab);
+      for(let r=12;r>=0;r--){const id=r*4+s;const b=document.createElement('button');
+        b.className='pcard'+(RED.has(s)?' red':'');b.textContent=RANKS[r];b.disabled=used.has(id);
+        b.addEventListener('click',()=>placeCard(id));row.appendChild(b);}
+      p.appendChild(row);}}
+  function clearZone(zone){const arr=zone==='hero'?hero:board;for(let i=0;i<arr.length;i++)if(arr[i]!=null){used.delete(arr[i]);arr[i]=null;}
+    for(let i=0;i<(zone==='hero'?heroCount():5);i++)renderSlot(zone,i);renderPalette();}
+
+  /* ===== monte carlo ===== */
+  let running=false;
+  function runSim(){
+    if(running)return;
+    const hc=heroCount();const heroCards=hero.filter(x=>x!=null);
+    if(heroCards.length!==hc){flash(`בחר ${hc} קלפים ליד שלך`);return;}
+    const boardCards=board.filter(x=>x!=null);
+    if(boardCards.length===1||boardCards.length===2){flash("לוח חייב 0, 3, 4 או 5 קלפים");return;}
+    const opps=+$('opps').value;
+    const base=game==="holdem"?60000:20000;
+    const mult=[1,1,2,4][+$('iters').value]||2;
+    const TARGET=Math.round(base*mult/(1+opps*0.35));
+    running=true;$('run').disabled=true;
+    const known=new Set([...heroCards,...boardCards]);
+    const deck=[];for(let i=0;i<52;i++)if(!known.has(i))deck.push(i);
+    const nd=deck.length, needBoard=5-boardCards.length, perOpp=game==="holdem"?2:4;
+    let win=0,tie=0,lose=0,shareSum=0,done=0;
+    const full=new Array(5);for(let i=0;i<boardCards.length;i++)full[i]=boardCards[i];
+    function evalHand(hcards,b){return game==="holdem"?eval7([hcards[0],hcards[1],b[0],b[1],b[2],b[3],b[4]])
+      :evalOmaha(hcards,b);}
+    function chunk(){
+      const CH=Math.min(4000,TARGET-done);
+      for(let it=0;it<CH;it++){
+        // partial shuffle deck
+        let take=needBoard+opps*perOpp;
+        for(let k=0;k<take;k++){const j=k+((Math.random()*(nd-k))|0);const t=deck[k];deck[k]=deck[j];deck[j]=t;}
+        let ptr=0;for(let i=boardCards.length;i<5;i++)full[i]=deck[ptr++];
+        const hsc=evalHand(heroCards,full);
+        let best=hsc,ties=0,beat=false;
+        for(let o=0;o<opps;o++){const oc=[];for(let q=0;q<perOpp;q++)oc.push(deck[ptr++]);
+          const osc=evalHand(oc,full);
+          if(osc>hsc){beat=true;break;} else if(osc===hsc)ties++;}
+        if(beat)lose++; else if(ties>0){tie++;shareSum+=1/(ties+1);} else {win++;shareSum+=1;}
+      }
+      done+=CH;
+      const eq=shareSum/done*100;
+      $('eq').textContent=eq.toFixed(1)+'%';
+      $('simcount').textContent='('+done.toLocaleString()+' ידיים)';
+      const w=win/done*100,t=tie/done*100,l=lose/done*100;
+      $('bw').style.width=w+'%';$('bt').style.width=t+'%';$('bl').style.width=l+'%';
+      $('kw').textContent=w.toFixed(1)+'%';$('kt').textContent=t.toFixed(1)+'%';$('kl').textContent=l.toFixed(1)+'%';
+      lastEquity=eq;
+      if(done<TARGET)setTimeout(chunk,0);
+      else{running=false;$('run').disabled=false;flash("סריקה הושלמה ✓ — "+done.toLocaleString()+" ידיים");}
+    }
+    flash("סורק…");chunk();
+  }
+  let lastEquity=null;
+
+  /* ===== EV coach ===== */
+  function advise(){
+    if(lastEquity==null){flash("קודם סרוק את הידיים");return;}
+    const pot=+$('pot').value||0, call=+$('call').value||0;
+    const v=$('verdict');
+    if(call<=0){v.className='verdict call';v.innerHTML="אין מה לשלם — קריאה חינם, תמיד רואים את הקלף הבא.";return;}
+    const need=call/(pot+call)*100;            // pot odds: required equity
+    const eq=lastEquity;
+    const evChips=(eq/100)*(pot+call)-call;    // EV of calling, in chips
+    if(eq>=need){
+      v.className='verdict call';
+      v.innerHTML=`✅ <b>קריאה +EV.</b> האקוויטי שלך <b>${eq.toFixed(1)}%</b> מעל הסף הנדרש <b>${need.toFixed(1)}%</b> (יחס קופה). תוחלת רווח לטווח ארוך: <b>+${evChips.toFixed(1)}</b> ז'יטונים לכל קריאה.`;
+    }else{
+      v.className='verdict fold';
+      v.innerHTML=`❌ <b>קיפול.</b> האקוויטי שלך <b>${eq.toFixed(1)}%</b> מתחת לסף הנדרש <b>${need.toFixed(1)}%</b>. קריאה כאן מפסידה <b>${evChips.toFixed(1)}</b> ז'יטונים בממוצע — לאורך זמן זה מדמם כסף.`;
+    }
+  }
+
+  function flash(m){$('msg').textContent=m;}
+
+  /* ===== tabs ===== */
+  function setGame(g){game=g;$('tabH').classList.toggle('active',g==='holdem');$('tabO').classList.toggle('active',g==='omaha');
+    hero=new Array(heroCount()).fill(null);board=new Array(5).fill(null);used.clear();active=null;
+    buildSlots();renderPalette();for(let i=0;i<heroCount();i++)renderSlot('hero',i);for(let i=0;i<5;i++)renderSlot('board',i);
+    $('eq').textContent='—';$('simcount').textContent='';['bw','bt','bl'].forEach(x=>$(x).style.width='0');
+    ['kw','kt','kl'].forEach(x=>$(x).textContent='—');$('verdict').className='verdict';lastEquity=null;flash('');
+    setActive('hero',0);
+  }
+  $('tabH').addEventListener('click',()=>setGame('holdem'));
+  $('tabO').addEventListener('click',()=>setGame('omaha'));
+  $('clrHero').addEventListener('click',()=>clearZone('hero'));
+  $('clrBoard').addEventListener('click',()=>clearZone('board'));
+  $('run').addEventListener('click',runSim);
+  $('advise').addEventListener('click',advise);
+
+  /* ===== boot ===== */
+  hero=new Array(2).fill(null);board=new Array(5).fill(null);
+  buildSlots();renderPalette();setActive('hero',0);
+  window.__equity=(h,b,opps,g)=>{ // test hook (does NOT touch shared state)
+    const gm=g||'holdem';const known=new Set([...h,...(b||[])]);const deck=[];for(let i=0;i<52;i++)if(!known.has(i))deck.push(i);
+    const nd=deck.length,perOpp=gm==='holdem'?2:4,needB=5-(b?b.length:0);let sh=0,N=40000;const full=[...(b||[])];
+    const ev=(hc,bo)=>gm==='holdem'?eval7([hc[0],hc[1],bo[0],bo[1],bo[2],bo[3],bo[4]]):evalOmaha(hc,bo);
+    for(let it=0;it<N;it++){let take=needB+opps*perOpp;for(let k=0;k<take;k++){const j=k+((Math.random()*(nd-k))|0);const t=deck[k];deck[k]=deck[j];deck[j]=t;}
+      let p=0;for(let i=(b?b.length:0);i<5;i++)full[i]=deck[p++];const hs=ev(h,full);let ties=0,beat=false;
+      for(let o=0;o<opps;o++){const oc=[];for(let q=0;q<perOpp;q++)oc.push(deck[p++]);const os=ev(oc,full);if(os>hs){beat=true;break;}else if(os===hs)ties++;}
+      if(!beat)sh+=1/(ties+1);}
+    return sh/N;};
+})();
+</script><script>
+if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}
+</script>
+</body>
+</html>
